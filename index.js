@@ -4,11 +4,28 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
 
 const crypto = require('crypto');
 
 
 const PORT = process.env.PORT || 3000;
+const secretKey = crypto.randomBytes(32).toString('hex');
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads'); // Save uploaded files to the 'uploads' directory
+  },
+  filename: function (req, file, cb) {
+    // Rename files to avoid conflicts and maintain file extensions
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
 
 
 // Connect to MongoDB (replace 'mongodb://localhost:27017/mydatabase' with your MongoDB URI)
@@ -33,6 +50,7 @@ const formDataSchema = new mongoose.Schema({
   // Other fields...
 });
 
+const FormData = mongoose.model('FormData', formDataSchema);
 
 // jwt token validation.
 
@@ -53,6 +71,7 @@ function authenticateToken(req, res, next) {
 
 // Create an Express app
 const app = express();
+app.use('/uploads', express.static('uploads'));
 
 // Middleware
 app.use(bodyParser.json()); // Parse JSON requests
@@ -90,7 +109,6 @@ app.post('/auth/user/signup', async (req, res) => {
   }
 });
 
-const secretKey = crypto.randomBytes(32).toString('hex');
 
 
 app.post('/auth/user/login', async (req, res) => {
@@ -107,18 +125,29 @@ app.post('/auth/user/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
     // Generate JWT token
-    const token = jwt.sign({ email: user.email }, secretKey, { expiresIn: '1h' });
-    res.json({ success: true, message: 'Login successful', token });
+    const token = jwt.sign({ email: user.email, userId: user._id  }, secretKey, { expiresIn: '1h' });
+    res.json({ success: true, message: 'Login successful', userId: user._id,token });
+
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
-app.post('/form',authenticateToken, async (req, res) => {
-  const { userId, latitude, longitude, image } = req.body; // Include userId
+app.post('/form',authenticateToken,upload.single('image'), async (req, res) => {
+  console.log(req.body);
+  console.log(req.file);
+  
+  const { userId, latitude, longitude } = req.body; // Include userId
+  const imagepath = req.file.path;
   try {
-    const newFormData = new FormData({ userId, latitude, longitude, image });
+   
+
+    console.log(userId);
+    console.log(latitude);
+    console.log(longitude);
+    console.log(imagepath);
+    const newFormData = new FormData({ userId, latitude, longitude, image:imagepath });
     await newFormData.save();
     res.status(200).json({ success: true, message: 'Form data saved successfully' });
   } catch (error) {
@@ -129,10 +158,20 @@ app.post('/form',authenticateToken, async (req, res) => {
 
 
 app.get('/data',authenticateToken, async (req, res) => {
-  const { userId } = req.query; // Assuming userId is passed as a query parameter
+  const { userId } = req; // Assuming userId is passed as a query parameter
+  console.log(userId);
+  const imageuri = 'http://192.168.177.197:3000/uploads/image-1710614012275.jpeg';
   try {
     const formData = await FormData.find({ userId });
-    res.status(200).json(formData);
+    const formattedData = formData.map(item => ({
+     
+      latitude: item.latitude,
+      longitude: item.longitude,
+      imageUrl: `http://192.168.177.197:3000/${item.image}`, // Change this URL according to your server setup
+      // Include other fields as needed
+    }));
+    console.log(formattedData);
+    res.status(200).json(formattedData);
   } catch (error) {
     console.error('Error retrieving form data:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
