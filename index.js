@@ -1,4 +1,5 @@
 // index.js
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
@@ -6,11 +7,19 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
+const dotenv = require('dotenv');
+
+
+// Specify the path to the .env file
+dotenv.config();
+
 
 const crypto = require('crypto');
 
 
 const PORT = process.env.PORT || 3000;
+const mongodbstring = process.env.MONGO_URL;
+console.log(mongodbstring)
 const secretKey = crypto.randomBytes(32).toString('hex');
 
 
@@ -29,7 +38,7 @@ const upload = multer({ storage: storage });
 
 
 // Connect to MongoDB (replace 'mongodb://localhost:27017/mydatabase' with your MongoDB URI)
-mongoose.connect('mongodb+srv://yuvraj:PQU5ZWQafjGZqkLi@mycluster.6rux1ja.mongodb.net/?retryWrites=true&w=majority&appName=mycluster', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongodbstring, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Error connecting to MongoDB:', err));
 
