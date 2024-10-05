@@ -95,7 +95,7 @@ app.get('/', (req, res) => {
 app.get('/server-info', (req, res) => {
   res.json({
     message: 'Private API Expo',
-    serverAddress: `http://localhost:${PORT}`
+    serverAddress: `https://user-data-management-backend.vercel.app:${PORT}`
   });
 });
 
@@ -171,14 +171,13 @@ app.post('/form',authenticateToken,upload.single('image'), async (req, res) => {
 app.get('/data',authenticateToken, async (req, res) => {
   const { userId } = req; // Assuming userId is passed as a query parameter
   console.log(userId);
-  // const imageuri = 'http://192.168.177.197:3000/uploads/image-1710614012275.jpeg';
   try {
     const formData = await FormData.find({ userId });
     const formattedData = formData.map(item => ({
      
       latitude: item.latitude,
       longitude: item.longitude,
-      imageUrl: `http://192.168.177.197:3000/${item.image}`, // Change this URL according to your server setup
+      imageUrl: `https://user-data-management-backend.vercel.app/${item.image}`, // Change this URL according to your server setup
       // Include other fields as needed
     }));
     console.log(formattedData);
