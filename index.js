@@ -19,8 +19,10 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const mongodbstring = process.env.MONGO_URL;
-console.log(mongodbstring)
-const secretKey = crypto.randomBytes(32).toString('hex');
+const secretKey = process.env.SECRET_KEY;
+console.log(secretKey);
+
+
 
 
 const storage = multer.diskStorage({
@@ -86,7 +88,7 @@ app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.json()); // Parse JSON requests
 
 app.get('/', (req, res) => {
-  res.send(`<h1>Private API Expo</h1><p>Server is running at http://localhost:${PORT}</p>`);
+  res.send(`<h1>Private API Expo</h1><p>Server is running at ${PORT}</p>`);
 });
 
 // Provide server information via an API endpoint
@@ -169,7 +171,7 @@ app.post('/form',authenticateToken,upload.single('image'), async (req, res) => {
 app.get('/data',authenticateToken, async (req, res) => {
   const { userId } = req; // Assuming userId is passed as a query parameter
   console.log(userId);
-  const imageuri = 'http://192.168.177.197:3000/uploads/image-1710614012275.jpeg';
+  // const imageuri = 'http://192.168.177.197:3000/uploads/image-1710614012275.jpeg';
   try {
     const formData = await FormData.find({ userId });
     const formattedData = formData.map(item => ({
@@ -194,5 +196,5 @@ app.get('/data',authenticateToken, async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on port  http://localhost:${PORT}`);
+  console.log(`Server is running on port  ${PORT}`);
 });
